@@ -1,7 +1,9 @@
-asgiref==3.8.1
-backports.zoneinfo==0.2.1
 Django==4.2.17
 djangorestframework==3.15.2
-sqlparse==0.5.2
-typing-extensions==4.12.2
-psycopg2-binary 
+djangorestframework-simplejwt==5.3.0
+django-cors-headers==4.3.0
+python-dotenv==1.0.0
+Pillow==10.0.0
+psycopg2-binary==2.9.9
+django-filter==23.3
+drf-yasg==1.21.7
