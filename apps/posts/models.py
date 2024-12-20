@@ -1,4 +1,6 @@
 from django.db import models
+from django.core.validators import MinLengthValidator, MaxLengthValidator
+from django.core.exceptions import ValidationError
 from django.conf import settings
 import uuid
 
@@ -37,3 +39,15 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+
+    def clean(self):
+        # Custom validation
+        if len(self.title) < 5:
+            raise ValidationError('Title must be at least 5 characters long')
+
+        if len(self.content) < 20:
+            raise ValidationError('Content must be at least 20 characters long')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Runs model validation
+        return super().save(*args, **kwargs)
