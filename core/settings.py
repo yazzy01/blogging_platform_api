@@ -83,8 +83,13 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///db.sqlite3',
-        conn_max_age=600
-    )
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True
+    ) if os.getenv('DATABASE_URL') else {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # Password validation
