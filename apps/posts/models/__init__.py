@@ -1,4 +1,3 @@
-from .post import Post
-from .tag import Tag
+from apps.posts.models import Post, Tag, PostLike
 
-__all__ = ['Post', 'Tag']
+__all__ = ['Post', 'Tag', 'PostLike']
