@@ -1,27 +1,81 @@
 from rest_framework import serializers
 from .models import Category
 
-class RecursiveCategorySerializer(serializers.Serializer):
-    def to_representation(self, value):
-        serializer = CategorySerializer(value, context=self.context)
-        return serializer.data
-
 class CategorySerializer(serializers.ModelSerializer):
-    children = RecursiveCategorySerializer(many=True, read_only=True)
-    post_count = serializers.IntegerField(read_only=True)
-    
+    """
+    Serializer for basic category information.
+    Used for list views and nested representations.
+    """
+    url = serializers.HyperlinkedIdentityField(
+        view_name='category-detail',
+        lookup_field='slug'
+    )
+    posts_count = serializers.IntegerField(read_only=True)
+    has_children = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = Category
         fields = [
-            'id', 'name', 'slug', 'description', 'parent',
-            'children', 'created_at', 'updated_at', 
-            'is_active', 'order', 'post_count'
+            'url', 'name', 'slug', 'description', 'icon', 'color',
+            'is_active', 'order', 'posts_count', 'has_children'
         ]
-        read_only_fields = ['slug', 'created_at', 'updated_at']
+        read_only_fields = ['slug']
 
-    def validate_parent(self, value):
-        if value and value.parent:
-            raise serializers.ValidationError(
-                "Categories can only be nested one level deep."
-            )
-        return value
+class CategoryDetailSerializer(CategorySerializer):
+    """
+    Serializer for detailed category information.
+    Used for retrieve, create and update operations.
+    """
+    parent = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    children = CategorySerializer(many=True, read_only=True)
+    breadcrumbs = serializers.SerializerMethodField()
+
+    class Meta(CategorySerializer.Meta):
+        fields = CategorySerializer.Meta.fields + [
+            'parent', 'children', 'breadcrumbs',
+            'created_at', 'updated_at'
+        ]
+
+    def get_breadcrumbs(self, obj):
+        """Get category breadcrumbs."""
+        breadcrumbs = []
+        current = obj
+        while current is not None:
+            breadcrumbs.append({
+                'name': current.name,
+                'slug': current.slug
+            })
+            current = current.parent
+        return list(reversed(breadcrumbs))
+
+    def validate(self, attrs):
+        """
+        Validate the category data.
+        Ensure proper parent-child relationships.
+        """
+        parent = attrs.get('parent')
+        if parent:
+            # Check for circular reference
+            if self.instance and parent.pk == self.instance.pk:
+                raise serializers.ValidationError({
+                    'parent': "A category cannot be its own parent."
+                })
+            
+            # Check for deep nesting
+            if parent.parent:
+                raise serializers.ValidationError({
+                    'parent': "Categories can only be nested one level deep."
+                })
+            
+            # Check for existing children when setting as child
+            if self.instance and self.instance.children.exists():
+                raise serializers.ValidationError({
+                    'parent': "Cannot set a category with children as a child category."
+                })
+        
+        return attrs

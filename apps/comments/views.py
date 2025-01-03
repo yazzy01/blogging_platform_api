@@ -1,54 +1,99 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from core.exceptions import PermissionDeniedError
+from apps.posts.models import Post
 from .models import Comment
-from .serializers import CommentSerializer
-from apps.core.permissions import IsAuthorOrReadOnly
-from django_filters.rest_framework import DjangoFilterBackend
+from .serializers import CommentSerializer, CommentDetailSerializer
+import logging
+
+logger = logging.getLogger('apps')
 
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.select_related('author', 'post').prefetch_related('replies')
-    serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['post', 'author', 'is_active']
-    search_fields = ['content']
-    ordering_fields = ['created_at', 'updated_at']
+    """
+    ViewSet for managing blog comments.
+    
+    Provides CRUD operations and additional actions for comment management.
+    """
+    queryset = Comment.objects.all()
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     ordering = ['-created_at']
-
-    def perform_create(self, serializer):
-        """Create a new comment"""
-        serializer.save(author=self.request.user)
 
     def get_queryset(self):
         """
-        Optionally restricts the returned comments to a given post,
-        by filtering against a `post` query parameter in the URL.
+        Get the list of comments.
+        Filter by post and optionally by parent for replies.
         """
-        queryset = super().get_queryset()
-        post_id = self.request.query_params.get('post', None)
-        if post_id is not None:
-            queryset = queryset.filter(post_id=post_id)
-        return queryset.filter(parent=None)  # Only return top-level comments
+        post_id = self.kwargs.get('post_pk')
+        queryset = Comment.objects.filter(post_id=post_id, is_approved=True)
 
-    @action(detail=True, methods=['POST'])
-    def reply(self, request, pk=None):
-        """Add a reply to a comment"""
-        parent_comment = self.get_object()
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(
-                author=request.user,
-                parent=parent_comment,
-                post=parent_comment.post
-            )
-            return Response(serializer.data)
-        return Response(serializer.errors, status=400)
+        # Filter by parent for replies
+        parent_id = self.request.query_params.get('parent', None)
+        if parent_id is not None:
+            if parent_id == '':
+                queryset = queryset.filter(parent=None)
+            else:
+                queryset = queryset.filter(parent_id=parent_id)
 
-    @action(detail=False, methods=['GET'])
-    def my_comments(self, request):
-        """List authenticated user's comments"""
-        queryset = self.get_queryset().filter(author=request.user)
-        serializer = self.get_serializer(queryset, many=True)
+        return queryset.select_related('author', 'parent')
+
+    def get_serializer_class(self):
+        """Return appropriate serializer class based on action."""
+        if self.action in ['retrieve', 'create', 'update', 'partial_update']:
+            return CommentDetailSerializer
+        return CommentSerializer
+
+    def perform_create(self, serializer):
+        """Create a new comment."""
+        post = get_object_or_404(Post, pk=self.kwargs.get('post_pk'))
+        comment = serializer.save(author=self.request.user, post=post)
+        logger.info(f"User {self.request.user.username} created comment on post: {post.title}")
+
+    def perform_update(self, serializer):
+        """Update a comment."""
+        instance = self.get_object()
+        if instance.author != self.request.user and not self.request.user.is_staff:
+            logger.warning(f"User {self.request.user.username} attempted to update comment on post: {instance.post.title}")
+            raise PermissionDeniedError("You can only edit your own comments.")
+        
+        serializer.save(is_edited=True)
+        logger.info(f"User {self.request.user.username} updated comment on post: {instance.post.title}")
+
+    def perform_destroy(self, instance):
+        """Delete a comment."""
+        if instance.author != self.request.user and not self.request.user.is_staff:
+            logger.warning(f"User {self.request.user.username} attempted to delete comment on post: {instance.post.title}")
+            raise PermissionDeniedError("You can only delete your own comments.")
+        
+        logger.info(f"User {self.request.user.username} deleted comment on post: {instance.post.title}")
+        instance.delete()
+
+    @action(detail=True, methods=['post'])
+    def toggle_like(self, request, post_pk=None, pk=None):
+        """Toggle like status for the current user."""
+        comment = self.get_object()
+        action = comment.toggle_like(request.user)
+        return Response({
+            'status': f'Comment {action}',
+            'likes_count': comment.likes_count
+        })
+
+    @action(detail=True, methods=['get'])
+    def replies(self, request, post_pk=None, pk=None):
+        """Get replies to this comment."""
+        comment = self.get_object()
+        replies = comment.replies.filter(is_approved=True)
+        serializer = CommentSerializer(replies, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def user_comments(self, request, post_pk=None):
+        """Get all comments by the current user on this post."""
+        comments = Comment.objects.filter(
+            post_id=post_pk,
+            author=request.user
+        ).select_related('author', 'parent')
+        
+        serializer = CommentSerializer(comments, many=True, context={'request': request})
         return Response(serializer.data)

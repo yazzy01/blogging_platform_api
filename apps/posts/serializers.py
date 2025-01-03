@@ -1,111 +1,132 @@
 from rest_framework import serializers
-from .models import Post, Tag
-from apps.users.serializers import UserSerializer
-from apps.categories.models import Category
-from django.utils.text import slugify
+from django.contrib.auth import get_user_model
+from .models import Post, Tag, PostLike
+from apps.users.serializers import UserProfileSerializer
+from apps.categories.serializers import CategorySerializer
+
+User = get_user_model()
 
 class TagSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Tag model.
+    """
+    posts_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Tag
-        fields = ['id', 'name', 'slug']
+        fields = ['id', 'name', 'slug', 'description', 'posts_count', 'created_at']
+        read_only_fields = ['slug', 'posts_count']
 
 class PostSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
-    tags = TagSerializer(many=True, required=False)
-    slug = serializers.SlugField(required=False)
-    categories = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Category.objects.all(),
-        required=False
+    """
+    Serializer for basic post information.
+    Used for list views and related posts.
+    """
+    author = UserProfileSerializer(read_only=True)
+    categories = CategorySerializer(many=True, read_only=True)
+    tags = TagSerializer(many=True, read_only=True)
+    is_liked = serializers.SerializerMethodField()
+    url = serializers.HyperlinkedIdentityField(
+        view_name='post-detail',
+        lookup_field='slug'
     )
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'slug', 'content', 'author', 'featured_image',
-                 'excerpt', 'categories', 'tags', 'status', 'view_count',
-                 'created_at', 'updated_at', 'published_at']
-        read_only_fields = ['author', 'view_count', 'created_at', 'updated_at']
+        fields = [
+            'url', 'title', 'slug', 'author', 'categories', 'tags',
+            'status', 'featured_image', 'views_count', 'likes_count',
+            'is_liked', 'created_at', 'reading_time'
+        ]
+        read_only_fields = ['slug', 'views_count', 'likes_count']
 
-    def validate_title(self, value):
-        if len(value) < 5:
-            raise serializers.ValidationError("Title must be at least 5 characters long")
-        return value
+    def get_is_liked(self, obj):
+        """Check if the current user has liked the post."""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
 
-    def validate_content(self, value):
-        if len(value) < 20:
-            raise serializers.ValidationError("Content must be at least 20 characters long")
-        return value
+class PostDetailSerializer(PostSerializer):
+    """
+    Serializer for detailed post information.
+    Used for retrieve, create and update operations.
+    """
+    category_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Tag.objects.all(),
+        write_only=True,
+        required=False,
+        source='categories'
+    )
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Tag.objects.all(),
+        write_only=True,
+        required=False,
+        source='tags'
+    )
 
-    def validate(self, data):
-        # Cross-field validation
-        title = data.get('title', '')
-        content = data.get('content', '')
-        
-        if title and content and title.lower() in content.lower():
-            raise serializers.ValidationError({
-                "title": "Title should not be contained within the content"
-            })
-        
-        return data
+    class Meta(PostSerializer.Meta):
+        fields = PostSerializer.Meta.fields + [
+            'content', 'meta_description', 'meta_keywords',
+            'published_at', 'category_ids', 'tag_ids'
+        ]
+        read_only_fields = PostSerializer.Meta.read_only_fields + ['published_at']
 
-    def generate_unique_slug(self, title):
+    def validate(self, attrs):
         """
-        Generate a unique slug from the given title
+        Validate the post data.
+        Ensure required fields are present when publishing.
         """
-        base_slug = slugify(title)
-        unique_slug = base_slug
-        n = 1
+        if attrs.get('status') == 'published':
+            required_fields = ['title', 'content', 'categories']
+            missing_fields = [field for field in required_fields if not attrs.get(field)]
+            if missing_fields:
+                raise serializers.ValidationError({
+                    'error': f"The following fields are required for publishing: {', '.join(missing_fields)}"
+                })
+            
+            # Validate content length
+            if len(attrs.get('content', '')) < 100:
+                raise serializers.ValidationError({
+                    'content': "Content must be at least 100 characters long for published posts."
+                })
+            
+            # Validate meta description
+            if not attrs.get('meta_description'):
+                # Auto-generate meta description from content
+                content = attrs.get('content', '')
+                attrs['meta_description'] = content[:157] + '...' if len(content) > 160 else content
         
-        # Keep checking until we find a unique slug
-        while Post.objects.filter(slug=unique_slug).exists():
-            unique_slug = f"{base_slug}-{n}"
-            n += 1
-        
-        return unique_slug
+        return attrs
 
     def create(self, validated_data):
-        # Separate tags and categories
-        tags_data = validated_data.pop('tags', [])
+        """Create a new post with associated categories and tags."""
         categories = validated_data.pop('categories', [])
-
-        # Auto-generate slug if not provided
-        if not validated_data.get('slug'):
-            validated_data['slug'] = self.generate_unique_slug(validated_data['title'])
-
-        # Create post
+        tags = validated_data.pop('tags', [])
+        
         post = Post.objects.create(**validated_data)
-
-        # Set categories
+        
         if categories:
             post.categories.set(categories)
-
-        # Handle tags
-        for tag_data in tags_data:
-            tag, _ = Tag.objects.get_or_create(**tag_data)
-            post.tags.add(tag)
-
+        if tags:
+            post.tags.set(tags)
+        
         return post
 
     def update(self, instance, validated_data):
-        # Handle slug update if title changes
-        if 'title' in validated_data and not validated_data.get('slug'):
-            validated_data['slug'] = self.generate_unique_slug(validated_data['title'])
-
-        # Handle tags and categories
-        if 'tags' in validated_data:
-            tags_data = validated_data.pop('tags')
-            instance.tags.clear()
-            for tag_data in tags_data:
-                tag, _ = Tag.objects.get_or_create(**tag_data)
-                instance.tags.add(tag)
-
-        if 'categories' in validated_data:
-            categories = validated_data.pop('categories')
-            instance.categories.set(categories)
-
-        # Update other fields
+        """Update a post with associated categories and tags."""
+        categories = validated_data.pop('categories', None)
+        tags = validated_data.pop('tags', None)
+        
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-
+        
+        if categories is not None:
+            instance.categories.set(categories)
+        if tags is not None:
+            instance.tags.set(tags)
+        
         instance.save()
         return instance

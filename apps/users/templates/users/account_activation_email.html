@@ -1,0 +1,57 @@
+{% autoescape off %}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome to Our Blog Platform!</h2>
+        
+        <p>Hi {{ user.username }},</p>
+        
+        <p>Thank you for registering with us. To activate your account, please click on the link below:</p>
+        
+        <a href="http://{{ domain }}{% url 'activate' uidb64=uid token=token %}" class="button">
+            Activate Account
+        </a>
+        
+        <p>This link will expire in 24 hours for security reasons.</p>
+        
+        <p>If you did not create this account, you can safely ignore this email.</p>
+        
+        <div class="footer">
+            <p>Best regards,<br>The Blog Platform Team</p>
+            <small>This is an automated message, please do not reply to this email.</small>
+        </div>
+    </div>
+</body>
+</html>
+{% endautoescape %}

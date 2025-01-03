@@ -1,135 +1,118 @@
-from rest_framework import viewsets, permissions, filters
-from django_filters.rest_framework import DjangoFilterBackend
-from .models import Post
-from .serializers import PostSerializer
-from django.utils.text import slugify
-from apps.core.permissions import IsAuthorOrReadOnly
-from django.db.models import Prefetch
-from django.core.cache import cache
-from django.conf import settings
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_cookie
+from rest_framework import viewsets, permissions, filters, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from datetime import datetime
 from django.utils import timezone
+from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend
+from core.exceptions import ResourceNotFoundError, PermissionDeniedError
+from .models import Post, Tag, PostLike
+from .serializers import PostSerializer, PostDetailSerializer, TagSerializer
+import logging
+
+logger = logging.getLogger('apps')
 
 class PostViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing blog posts.
+    
+    Provides CRUD operations and additional actions for post management.
+    """
     queryset = Post.objects.all()
-    serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
-    lookup_field = 'id'
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['categories', 'author', 'status']
-    search_fields = ['title', 'content', 'tags__name', 'author__username']
-    ordering_fields = ['created_at', 'updated_at', 'published_at', 'title']
-    ordering = ['-created_at']
+    filterset_fields = ['status', 'author', 'categories', 'tags']
+    search_fields = ['title', 'content', 'meta_keywords']
+    ordering_fields = ['created_at', 'updated_at', 'views_count', 'likes_count']
+    lookup_field = 'slug'
+
+    def get_serializer_class(self):
+        """Return appropriate serializer class based on action."""
+        if self.action in ['retrieve', 'create', 'update', 'partial_update']:
+            return PostDetailSerializer
+        return PostSerializer
 
     def get_queryset(self):
         """
-        Get the list of items for this view.
-        This must be an iterable, and may be a queryset.
+        Get the list of posts based on user's authentication status.
+        Authenticated users can see their own drafts.
         """
-        queryset = Post.objects.select_related(
-            'author'  # Optimize author foreign key
-        ).prefetch_related(
-            'categories',  # Optimize categories many-to-many
-            'tags'  # Optimize tags many-to-many
-        )
-
-        # Filter by category
-        category = self.request.query_params.get('category', None)
-        if category:
-            queryset = queryset.filter(categories__name=category)
-
-        # Filter by date range
-        start_date = self.request.query_params.get('start_date', None)
-        end_date = self.request.query_params.get('end_date', None)
-        if start_date and end_date:
-            try:
-                # Parse dates in YYYY-MM-DD format
-                start = datetime.strptime(start_date, '%Y-%m-%d')
-                end = datetime.strptime(end_date, '%Y-%m-%d')
-                # Make them timezone aware
-                start = timezone.make_aware(start)
-                end = timezone.make_aware(end)
-                queryset = queryset.filter(created_at__date__range=[start_date, end_date])
-            except ValueError:
-                pass
-
-        # Filter by tag
-        tag = self.request.query_params.get('tag', None)
-        if tag:
-            queryset = queryset.filter(tags__name=tag)
-
-        return queryset.distinct()
+        queryset = Post.objects.all()
+        if not self.request.user.is_authenticated:
+            queryset = queryset.filter(status='published')
+        elif not self.request.user.is_staff:
+            queryset = queryset.filter(
+                Q(status='published') | Q(author=self.request.user)
+            )
+        return queryset
 
     def perform_create(self, serializer):
-        """
-        Handle post creation with automatic slug generation
-        """
-        if not serializer.validated_data.get('slug'):
-            title = serializer.validated_data.get('title', '')
-            base_slug = slugify(title)
-            unique_slug = base_slug
-            n = 1
-            while Post.objects.filter(slug=unique_slug).exists():
-                unique_slug = f"{base_slug}-{n}"
-                n += 1
-            serializer.validated_data['slug'] = unique_slug
+        """Create a new post with the current user as author."""
         serializer.save(author=self.request.user)
+        logger.info(f"User {self.request.user.username} created post: {serializer.instance.title}")
 
-    @method_decorator(cache_page(settings.CACHE_TTL))
-    @method_decorator(vary_on_cookie)
-    def list(self, request, *args, **kwargs):
-        """
-        Cached list view
-        """
-        return super().list(request, *args, **kwargs)
-
-    @method_decorator(cache_page(settings.CACHE_TTL))
-    @method_decorator(vary_on_cookie)
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Cached detail view
-        """
-        return super().retrieve(request, *args, **kwargs)
-
-    def update(self, request, *args, **kwargs):
-        """
-        Handle post updates
-        """
-        partial = kwargs.pop('partial', False)
+    def perform_update(self, serializer):
+        """Update post and handle status changes."""
         instance = self.get_object()
+        if instance.author != self.request.user and not self.request.user.is_staff:
+            logger.warning(f"User {self.request.user.username} attempted to update post: {instance.title}")
+            raise PermissionDeniedError("You can only edit your own posts.")
         
-        # Check if title is being updated
-        if 'title' in request.data and not request.data.get('slug'):
-            new_title = request.data['title']
-            base_slug = slugify(new_title)
-            unique_slug = base_slug
-            n = 1
-            while Post.objects.filter(slug=unique_slug).exclude(id=instance.id).exists():
-                unique_slug = f"{base_slug}-{n}"
-                n += 1
-            request.data['slug'] = unique_slug
+        # Handle publication status change
+        if instance.status != 'published' and serializer.validated_data.get('status') == 'published':
+            serializer.validated_data['published_at'] = timezone.now()
+        
+        serializer.save()
+        logger.info(f"User {self.request.user.username} updated post: {instance.title}")
 
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+    def perform_destroy(self, instance):
+        """Delete post after permission check."""
+        if instance.author != self.request.user and not self.request.user.is_staff:
+            logger.warning(f"User {self.request.user.username} attempted to delete post: {instance.title}")
+            raise PermissionDeniedError("You can only delete your own posts.")
+        
+        logger.info(f"User {self.request.user.username} deleted post: {instance.title}")
+        instance.delete()
 
-        if getattr(instance, '_prefetched_objects_cache', None):
-            instance._prefetched_objects_cache = {}
+    @action(detail=True, methods=['post'])
+    def toggle_like(self, request, slug=None):
+        """Toggle like status for the current user."""
+        post = self.get_object()
+        action = post.toggle_like(request.user)
+        return Response({'status': f'Post {action}', 'likes_count': post.likes_count})
 
+    @action(detail=True, methods=['get'])
+    def related_posts(self, request, slug=None):
+        """Get posts related to the current post based on categories and tags."""
+        post = self.get_object()
+        related_posts = Post.objects.filter(
+            Q(categories__in=post.categories.all()) | Q(tags__in=post.tags.all())
+        ).exclude(id=post.id).distinct()[:5]
+        
+        serializer = PostSerializer(related_posts, many=True)
         return Response(serializer.data)
 
-    def destroy(self, request, *args, **kwargs):
-        """
-        Handle post deletion
-        """
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(
-            {"message": "Post deleted successfully"},
-            status=status.HTTP_204_NO_CONTENT
-        )
+    @action(detail=True, methods=['get'])
+    def view(self, request, slug=None):
+        """Record a view for the post."""
+        post = self.get_object()
+        post.increment_views()
+        return Response({'status': 'view recorded', 'views_count': post.views_count})
+
+class TagViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing post tags.
+    """
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    lookup_field = 'slug'
+
+    def get_queryset(self):
+        """Get tags with optional filtering."""
+        queryset = Tag.objects.all()
+        if self.action == 'list':
+            # Optionally filter by usage count
+            min_posts = self.request.query_params.get('min_posts', None)
+            if min_posts and min_posts.isdigit():
+                queryset = queryset.filter(posts_count__gte=int(min_posts))
+        return queryset

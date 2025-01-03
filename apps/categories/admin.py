@@ -1,6 +1,6 @@
 from django.contrib import admin
+from django.db.models import Count, Q
 from .models import Category
-from django.db.models import Count
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -15,7 +15,7 @@ class CategoryAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         queryset = queryset.annotate(
-            post_count=Count('posts', filter=models.Q(posts__status='published'))
+            post_count=Count('posts', filter=Q(posts__status='published'))
         )
         return queryset
 
