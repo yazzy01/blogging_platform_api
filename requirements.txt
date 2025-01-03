@@ -12,3 +12,4 @@ whitenoise==6.5.0
 django-redis==5.4.0
 redis==5.0.1
 dj-database-url==2.1.0
+social-auth-app-django==5.4.0
