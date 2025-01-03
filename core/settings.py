@@ -23,6 +23,11 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com').split(',')
 
+# Debug logging for environment variables
+print("SECRET_KEY:", os.getenv('SECRET_KEY'))
+print("DEBUG:", os.getenv('DEBUG'))
+print("ALLOWED_HOSTS:", os.getenv('ALLOWED_HOSTS'))
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -79,18 +84,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+# Debug logging for database configuration
+print("DATABASE_URL:", os.getenv('DATABASE_URL'))
+print("DEBUG:", os.getenv('DEBUG'))
+print("ALLOWED_HOSTS:", os.getenv('ALLOWED_HOSTS'))
+
 # Database
-DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///db.sqlite3',
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True
-    ) if os.getenv('DATABASE_URL') else {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+database_url = os.getenv('DATABASE_URL')
+if database_url:
+    DATABASES = {
+        'default': dj_database_url.parse(database_url, conn_max_age=600, ssl_require=True)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
