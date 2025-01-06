@@ -24,7 +24,14 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    url=f"https://blogging-platform-api-748v.onrender.com",
+    patterns=[
+        path('api/', include('apps.users.urls')),
+        path('api/', include('apps.posts.urls')),
+        path('api/', include('apps.categories.urls')),
+        path('api/', include('apps.comments.urls')),
+        path('api/token/', TokenObtainPairView.as_view()),
+        path('api/token/refresh/', TokenRefreshView.as_view()),
+    ],
 )
 
 def redirect_to_swagger(request):
