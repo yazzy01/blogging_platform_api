@@ -2,30 +2,27 @@ services:
   - type: web
     name: blogging-platform-api
     env: python
-    buildCommand: |
-      pip install -r requirements.txt
-      python manage.py collectstatic --noinput
-    startCommand: gunicorn core.wsgi:application
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn core.wsgi:application
     healthCheckPath: /api/health/
     healthCheckTimeout: 300
+    autoDeploy: false
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
       - key: DATABASE_URL
         fromDatabase:
-          name: blogging_platform_db
+          name: blogging-platform-db
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: blogging-platform-redis
-          type: redis
-          property: connectionString
+      - key: DJANGO_SETTINGS_MODULE
+        value: core.settings
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
-        value: false
+        value: "False"
       - key: ALLOWED_HOSTS
-        value: ".onrender.com"
+        value: .onrender.com
+    initialDeployHook: python manage.py makemigrations
 
   - type: redis
     name: blogging-platform-redis
@@ -33,7 +30,7 @@ services:
     plan: free
 
 databases:
-  - name: blogging_platform_db
+  - name: blogging-platform-db
     databaseName: blogging_platform
     user: blogging_platform_user
     plan: free

@@ -2,6 +2,9 @@ from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
 from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from django.db import connection
 
 def custom_404(request, exception):
     """
@@ -42,8 +45,32 @@ def custom_exception_handler(exc, context):
 
     return response
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def health_check(request):
     """
-    Health check endpoint for Render deployment
+    Basic health check endpoint that verifies database connectivity
     """
-    return JsonResponse({'status': 'healthy'}, status=200)
+    try:
+        # Test database connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+        
+        return Response(
+            {
+                "status": "healthy",
+                "database": "connected",
+                "message": "API is running normally"
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {
+                "status": "unhealthy",
+                "database": "disconnected",
+                "message": str(e)
+            },
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
