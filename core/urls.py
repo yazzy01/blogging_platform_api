@@ -48,19 +48,21 @@ urlpatterns = [
     # Root redirect to Swagger
     path('', redirect_to_swagger, name='api-root'),
 
+    # Health Check - must be before other routes
+    path('api/health/', health_check, name='health_check'),
+
     # Admin
     path('admin/', admin.site.urls),
-
-    # Authentication
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # API Endpoints
     path('api/users/', include('apps.users.urls')),
     path('api/posts/', include('apps.posts.urls')),
     path('api/categories/', include('apps.categories.urls')),
     path('api/comments/', include('apps.comments.urls')),
-    path('api/health/', health_check, name='health_check'),
+
+    # Authentication
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Swagger URLs
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),

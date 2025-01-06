@@ -3,9 +3,9 @@ services:
     name: blogging-platform-api
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn core.wsgi:application
+    startCommand: gunicorn core.wsgi:application
     healthCheckPath: /api/health/
-    healthCheckTimeout: 300
+    healthCheckTimeout: 100
     autoDeploy: false
     envVars:
       - key: PYTHON_VERSION
@@ -22,6 +22,7 @@ services:
         value: "False"
       - key: ALLOWED_HOSTS
         value: .onrender.com
+    preDeployCommand: python manage.py migrate && python manage.py collectstatic --noinput
     initialDeployHook: python manage.py makemigrations
 
   - type: redis
