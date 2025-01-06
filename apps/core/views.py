@@ -48,29 +48,5 @@ def custom_exception_handler(exc, context):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):
-    """
-    Basic health check endpoint that verifies database connectivity
-    """
-    try:
-        # Test database connection
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-            cursor.fetchone()
-        
-        return Response(
-            {
-                "status": "healthy",
-                "database": "connected",
-                "message": "API is running normally"
-            },
-            status=status.HTTP_200_OK
-        )
-    except Exception as e:
-        return Response(
-            {
-                "status": "unhealthy",
-                "database": "disconnected",
-                "message": str(e)
-            },
-            status=status.HTTP_503_SERVICE_UNAVAILABLE
-        )
+    """Simple health check endpoint"""
+    return JsonResponse({'status': 'healthy'}, status=200)
