@@ -21,7 +21,7 @@ def custom_500(request):
     Custom handler for 500 errors
     """
     data = {
-        'error': 'An internal server error occurred',
+        'error': 'Internal server error',
         'status_code': 500
     }
     return JsonResponse(data, status=500)
@@ -31,7 +31,7 @@ def custom_exception_handler(exc, context):
     Custom exception handler for REST framework
     """
     response = exception_handler(exc, context)
-
+    
     if response is not None:
         response.data['status_code'] = response.status_code
         
@@ -48,5 +48,23 @@ def custom_exception_handler(exc, context):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):
-    """Simple health check endpoint"""
-    return JsonResponse({'status': 'healthy'}, status=200)
+    """
+    Health check endpoint to verify API is running
+    """
+    try:
+        # Test database connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+        
+        return JsonResponse({
+            'status': 'healthy',
+            'database': 'connected',
+            'message': 'API is running'
+        }, status=200)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'unhealthy',
+            'database': 'disconnected',
+            'message': str(e)
+        }, status=503)
