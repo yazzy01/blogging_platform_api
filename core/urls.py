@@ -9,6 +9,7 @@ from rest_framework_simplejwt.views import (
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+from apps.core.views import health_check
 
 # Swagger/OpenAPI schema configuration
 schema_view = get_schema_view(
@@ -37,6 +38,7 @@ urlpatterns = [
     path('api/posts/', include('apps.posts.urls')),
     path('api/categories/', include('apps.categories.urls')),
     path('api/comments/', include('apps.comments.urls')),
+    path('api/health/', health_check, name='health_check'),
 
     # API Documentation
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), 

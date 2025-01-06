@@ -41,3 +41,9 @@ def custom_exception_handler(exc, context):
         response.data['method'] = context['request'].method
 
     return response
+
+def health_check(request):
+    """
+    Health check endpoint for Render deployment
+    """
+    return JsonResponse({'status': 'healthy'}, status=200)
