@@ -17,6 +17,8 @@ class UserActivityViewSet(viewsets.ReadOnlyModelViewSet):
         Return activities for the current user,
         or all activities for staff users
         """
+        if getattr(self, 'swagger_fake_view', False):
+            return UserActivity.objects.none()
         if self.request.user.is_staff:
             return UserActivity.objects.all()
         return UserActivity.objects.filter(user=self.request.user)

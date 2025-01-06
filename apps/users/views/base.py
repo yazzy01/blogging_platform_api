@@ -158,6 +158,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Profile.objects.none()
         # Regular users can only see their own profile
         if not self.request.user.is_staff:
             return Profile.objects.filter(user=self.request.user)
