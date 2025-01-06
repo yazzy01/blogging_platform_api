@@ -21,7 +21,7 @@ def custom_500(request):
     Custom handler for 500 errors
     """
     data = {
-        'error': 'Internal server error',
+        'error': 'An internal server error occurred',
         'status_code': 500
     }
     return JsonResponse(data, status=500)
@@ -34,15 +34,7 @@ def custom_exception_handler(exc, context):
     
     if response is not None:
         response.data['status_code'] = response.status_code
-        
-        # Add more context if available
-        if hasattr(exc, 'detail'):
-            response.data['detail'] = str(exc.detail)
-        
-        # Add request information
-        response.data['path'] = context['request'].path
-        response.data['method'] = context['request'].method
-
+    
     return response
 
 @api_view(['GET'])
@@ -57,14 +49,16 @@ def health_check(request):
             cursor.execute("SELECT 1")
             cursor.fetchone()
         
-        return JsonResponse({
+        data = {
             'status': 'healthy',
             'database': 'connected',
-            'message': 'API is running'
-        }, status=200)
+            'message': 'API is running normally'
+        }
+        return JsonResponse(data, status=200)
     except Exception as e:
-        return JsonResponse({
+        data = {
             'status': 'unhealthy',
             'database': 'disconnected',
             'message': str(e)
-        }, status=503)
+        }
+        return JsonResponse(data, status=503)

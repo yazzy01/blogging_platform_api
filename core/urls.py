@@ -18,22 +18,21 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    # Health Check - must be before other routes
+    path('health/', health_check, name='health_check'),
+    path('api/health/', health_check, name='health_check_alt'),
+
     # Documentation
     path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
-    # Health Check - must be before other routes
-    path('api/health/', health_check, name='health_check'),
-    path('health/', health_check, name='health_check_alt'),  # Alternative health check URL
-
     # Admin
     path('admin/', admin.site.urls),
 
-    # API Endpoints
-    path('api/', include([
-        path('posts/', include('apps.posts.urls')),
-        path('users/', include('apps.users.urls')),
-        path('categories/', include('apps.categories.urls')),
-        path('comments/', include('apps.comments.urls')),
-    ])),
+    # API routes
+    path('api/', include('apps.blog.urls')),
 ]
+
+# Custom error handlers
+handler404 = 'apps.core.views.custom_404'
+handler500 = 'apps.core.views.custom_500'
