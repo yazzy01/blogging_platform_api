@@ -226,6 +226,24 @@ SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://blogging-platform-api-748v.onrender.com",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+# Swagger settings
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    },
+    'VALIDATOR_URL': None,
+}
 
 # Testing
 TESTING = os.getenv('TESTING', 'False') == 'True'

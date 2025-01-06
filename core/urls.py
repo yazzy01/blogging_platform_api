@@ -24,6 +24,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    url=f"https://blogging-platform-api-748v.onrender.com",
 )
 
 def redirect_to_swagger(request):
