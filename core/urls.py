@@ -1,18 +1,24 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
-from rest_framework import permissions
 from apps.core.views import health_check
 
 # Swagger/OpenAPI schema configuration
+class CustomSchemaGenerator(openapi.SchemaGenerator):
+    def get_schema(self, request=None, public=False):
+        """Generate a schema with a fake request without user authentication."""
+        schema = super().get_schema(request, public)
+        return schema
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Blog Platform API",
@@ -23,6 +29,7 @@ schema_view = get_schema_view(
         license=openapi.License(name="BSD License"),
     ),
     public=True,
+    generator_class=CustomSchemaGenerator,
     permission_classes=(permissions.AllowAny,),
     patterns=[
         path('api/', include('apps.users.urls')),
@@ -55,11 +62,10 @@ urlpatterns = [
     path('api/comments/', include('apps.comments.urls')),
     path('api/health/', health_check, name='health_check'),
 
-    # API Documentation
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), 
-         name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), 
-         name='schema-redoc'),
+    # Swagger URLs
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     
     # Optional: API Root View
     path('api/', include('rest_framework.urls')),

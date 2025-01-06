@@ -246,7 +246,17 @@ SWAGGER_SETTINGS = {
     'OPERATIONS_SORTER': 'alpha',
     'JSON_EDITOR': True,
     'DISPLAY_OPERATION_ID': False,
+    'DOC_EXPANSION': 'none',
+    'DEFAULT_MODEL_RENDERING': 'example',
+    'PERSIST_AUTH': True,
+    'REFETCH_SCHEMA_WITH_AUTH': True,
 }
+
+DRF_YASG_EXCLUDE_VIEWS = (
+    'rest_framework.views',
+    'rest_framework.viewsets',
+    'rest_framework.generics',
+)
 
 # Testing
 TESTING = os.getenv('TESTING', 'False') == 'True'

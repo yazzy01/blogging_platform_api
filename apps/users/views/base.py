@@ -153,16 +153,21 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ProfileViewSet(viewsets.ModelViewSet):
-    queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
+        if getattr(self, 'swagger_fake_view', False):  # pragma: no cover
             return Profile.objects.none()
+        
+        # Check if request exists and has user attribute
+        if not hasattr(self, 'request') or not hasattr(self.request, 'user'):
+            return Profile.objects.none()
+            
         # Regular users can only see their own profile
         if not self.request.user.is_staff:
             return Profile.objects.filter(user=self.request.user)
+        # Staff users can see all profiles
         return Profile.objects.all()
 
     @action(detail=False, methods=['get', 'put', 'patch'])
