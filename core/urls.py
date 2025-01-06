@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import redirect
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -25,7 +26,13 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+def redirect_to_swagger(request):
+    return redirect('schema-swagger-ui')
+
 urlpatterns = [
+    # Root redirect to Swagger
+    path('', redirect_to_swagger, name='api-root'),
+
     # Admin
     path('admin/', admin.site.urls),
 
