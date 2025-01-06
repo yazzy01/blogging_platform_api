@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
 from .models import Profile
 from .serializers import UserSerializer, UserProfileSerializer, ProfileSerializer
 from .tokens import account_activation_token

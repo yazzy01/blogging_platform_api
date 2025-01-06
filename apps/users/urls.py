@@ -21,7 +21,7 @@ from .views.auth import (
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
-router.register(r'profiles', ProfileViewSet)
+router.register(r'profiles', ProfileViewSet, basename='profile')
 router.register(r'activities', UserActivityViewSet, basename='user-activity')
 
 urlpatterns = [
