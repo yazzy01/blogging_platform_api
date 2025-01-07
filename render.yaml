@@ -7,8 +7,7 @@ services:
     buildCommand: |
       python -m pip install --upgrade pip
       pip install -r requirements.txt
-      python manage.py collectstatic --noinput
-    startCommand: gunicorn --workers=4 --threads=4 --timeout=120 config.wsgi:application
+    startCommand: bash start.sh
     healthCheckPath: /api/health/
     healthCheckTimeout: 100
     autoDeploy: false
@@ -28,7 +27,9 @@ services:
       - key: ALLOWED_HOSTS
         value: .onrender.com,blogging-platform-api-74bv.onrender.com
       - key: PYTHONPATH
-        value: /app
+        value: /app:/app/apps
+      - key: PORT
+        value: 8000
     disk:
       name: blogging-platform-data
       mountPath: /app/data
