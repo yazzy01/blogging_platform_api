@@ -1,2 +1,2 @@
-web: gunicorn core.wsgi:application
-worker: celery -A blogging_platform_api worker -l info
+web: gunicorn --workers=4 --threads=4 core.wsgi:application
+worker: celery -A core worker -l info

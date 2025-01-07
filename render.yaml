@@ -2,13 +2,15 @@ services:
   - type: web
     name: blogging-platform-api
     env: python
+    region: frankfurt
+    plan: free
     buildCommand: |
       python -m pip install --upgrade pip
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
-    startCommand: gunicorn core.wsgi:application --log-file - --log-level debug
+    startCommand: gunicorn --workers=4 --threads=4 --timeout=120 core.wsgi:application
     healthCheckPath: /api/health/
-    healthCheckTimeout: 60
+    healthCheckTimeout: 100
     autoDeploy: false
     envVars:
       - key: PYTHON_VERSION
@@ -25,7 +27,12 @@ services:
         value: "False"
       - key: ALLOWED_HOSTS
         value: .onrender.com,blogging-platform-api-74bv.onrender.com
-    plan: free
+      - key: PYTHONPATH
+        value: /app
+    disk:
+      name: blogging-platform-data
+      mountPath: /app/data
+      sizeGB: 1
 
   - type: redis
     name: blogging-platform-redis
@@ -37,3 +44,4 @@ databases:
     databaseName: blogging_platform
     user: blogging_platform_user
     plan: free
+    ipAllowList: []
