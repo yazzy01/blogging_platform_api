@@ -68,7 +68,7 @@ MIDDLEWARE = [
     'apps.users.middleware.UserActivityMiddleware',
 ]
 
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
@@ -88,7 +88,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
 
 # Debug logging for database configuration
 print("DATABASE_URL:", os.getenv('DATABASE_URL'))
