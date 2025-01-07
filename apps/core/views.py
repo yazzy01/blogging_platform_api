@@ -2,9 +2,10 @@ from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
 from django.http import JsonResponse
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, schema
 from rest_framework.permissions import AllowAny
 from django.db import connection
+from rest_framework.schemas import AutoSchema
 
 def custom_404(request, exception):
     """
@@ -37,8 +38,13 @@ def custom_exception_handler(exc, context):
     
     return response
 
+class HealthCheckSchema(AutoSchema):
+    def get_description(self, path, method):
+        return "Health check endpoint to verify API is running"
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@schema(HealthCheckSchema())
 def health_check(request):
     """
     Health check endpoint to verify API is running
@@ -49,16 +55,13 @@ def health_check(request):
             cursor.execute("SELECT 1")
             cursor.fetchone()
         
-        data = {
+        return Response({
             'status': 'healthy',
-            'database': 'connected',
-            'message': 'API is running normally'
-        }
-        return JsonResponse(data, status=200)
+            'database': 'connected'
+        }, status=status.HTTP_200_OK)
     except Exception as e:
-        data = {
+        return Response({
             'status': 'unhealthy',
             'database': 'disconnected',
-            'message': str(e)
-        }
-        return JsonResponse(data, status=503)
+            'error': str(e)
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
