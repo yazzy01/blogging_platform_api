@@ -231,7 +231,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://blogging-platform-api.onrender.com",
+    "https://blogging-platform-api-74bv.onrender.com",
 ]
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.onrender\.com$",
@@ -239,7 +239,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
-    "https://blogging-platform-api.onrender.com",
+    "https://blogging-platform-api-74bv.onrender.com",
 ]
 
 # Swagger settings
@@ -252,7 +252,7 @@ SWAGGER_SETTINGS = {
             'in': 'header'
         }
     },
-    'DEFAULT_API_URL': 'https://blogging-platform-api.onrender.com'
+    'DEFAULT_API_URL': 'https://blogging-platform-api-74bv.onrender.com'
 }
 
 DRF_YASG_EXCLUDE_VIEWS = (

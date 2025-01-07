@@ -15,14 +15,12 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    url='https://blogging-platform-api.onrender.com',
+    url='https://blogging-platform-api-74bv.onrender.com',
 )
 
 urlpatterns = [
     # Health Check - must be before other routes
-    path('health/', health_check, name='health_check'),
-    path('health', health_check),  # Also match without trailing slash
-    path('api/health/', health_check, name='health_check_alt'),
+    path('api/health/', health_check, name='health_check'),
     path('api/health', health_check),  # Also match without trailing slash
 
     # Documentation
