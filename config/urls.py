@@ -5,6 +5,7 @@ from apps.core.views import health_check
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.conf import settings
 
 # Swagger documentation setup
 schema_view = get_schema_view(
@@ -12,10 +13,13 @@ schema_view = get_schema_view(
         title="Blogging Platform API",
         default_version='v1',
         description="API for the Blogging Platform",
+        terms_of_service="",
+        contact=openapi.Contact(email=""),
+        license=openapi.License(name="MIT License"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    url='https://blogging-platform-api-74bv.onrender.com',
+    url=f"https://blogging-platform-api-748v.onrender.com",
 )
 
 urlpatterns = [
