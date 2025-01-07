@@ -30,6 +30,8 @@ services:
         value: /app:/app/apps
       - key: PORT
         value: 8000
+      - key: WSGI_APPLICATION
+        value: wsgi_handler.application
     disk:
       name: blogging-platform-data
       mountPath: /app/data
