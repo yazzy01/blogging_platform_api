@@ -6,7 +6,7 @@ services:
       python -m pip install --upgrade pip
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
-    startCommand: gunicorn core.wsgi:application
+    startCommand: gunicorn core.wsgi:application --log-file - --log-level debug
     healthCheckPath: /api/health/
     healthCheckTimeout: 60
     autoDeploy: false
@@ -24,7 +24,7 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: .onrender.com
+        value: .onrender.com,blogging-platform-api-74bv.onrender.com
     plan: free
 
   - type: redis

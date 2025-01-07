@@ -19,14 +19,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'your-local-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+print(f"Debug mode: {DEBUG}")
+print(f"Database URL: {os.getenv('DATABASE_URL', 'not set')}")
+print(f"Allowed hosts: {os.getenv('ALLOWED_HOSTS', 'not set')}")
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com').split(',')
 
 # Debug logging for environment variables
 print("SECRET_KEY:", os.getenv('SECRET_KEY'))
-print("DEBUG:", os.getenv('DEBUG'))
-print("ALLOWED_HOSTS:", os.getenv('ALLOWED_HOSTS'))
 
 # Application definition
 INSTALLED_APPS = [
@@ -36,12 +37,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third-party apps
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
     'django_filters',
     'social_django',
+    
+    # Local apps
+    'apps.core.apps.CoreConfig',
     'apps.users.apps.UsersConfig',
     'apps.posts.apps.PostsConfig',
     'apps.categories.apps.CategoriesConfig',
@@ -86,8 +92,6 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # Debug logging for database configuration
 print("DATABASE_URL:", os.getenv('DATABASE_URL'))
-print("DEBUG:", os.getenv('DEBUG'))
-print("ALLOWED_HOSTS:", os.getenv('ALLOWED_HOSTS'))
 
 # Database
 database_url = os.getenv('DATABASE_URL')
