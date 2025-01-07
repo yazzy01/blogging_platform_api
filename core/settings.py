@@ -93,11 +93,16 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Debug logging for database configuration
 print("DATABASE_URL:", os.getenv('DATABASE_URL'))
 
-# Database
+# Database configuration
 database_url = os.getenv('DATABASE_URL')
 if database_url:
     DATABASES = {
-        'default': dj_database_url.parse(database_url, conn_max_age=600, ssl_require=True)
+        'default': dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
     }
 else:
     DATABASES = {
@@ -106,6 +111,8 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+print("Database config:", DATABASES['default'].get('ENGINE', 'not set'))
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -132,6 +139,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+# Create static directory if it doesn't exist
+if not os.path.exists(os.path.join(BASE_DIR, 'static')):
+    os.makedirs(os.path.join(BASE_DIR, 'static'))
+
+# Whitenoise configuration
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
