@@ -59,10 +59,10 @@ INSTALLED_APPS = [
     
     # Local apps
     'core.apps.CoreConfig',
-    'users.apps.UsersConfig',
-    'categories.apps.CategoriesConfig',
-    'posts.apps.PostsConfig',
-    'comments.apps.CommentsConfig',
+    'users',
+    'categories',
+    'posts',
+    'comments',
 ]
 
 MIDDLEWARE = [

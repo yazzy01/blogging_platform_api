@@ -31,6 +31,7 @@ class Profile(models.Model):
     linkedin = models.CharField(max_length=100, blank=True)
 
     class Meta:
+        app_label = 'users'
         verbose_name = 'User Profile'
         verbose_name_plural = 'User Profiles'
 
