@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'social_django',
     
     # Local apps
-    'apps.core.apps.CoreConfig',
+    'apps.core',
     'apps.users.apps.UsersConfig',
     'apps.posts.apps.PostsConfig',
     'apps.categories.apps.CategoriesConfig',
