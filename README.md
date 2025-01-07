@@ -2,10 +2,16 @@
 
 A robust and feature-rich RESTful API for managing a blogging platform, built with Django and Django REST Framework.
 
+## Project Status
+🚀 **BE Capstone Project - In Progress**
+- Start Date: December 16, 2024
+- Expected Completion: January 10, 2025
+- Current Status: API Development and Documentation Phase
+
 ## Features
 
 - **User Management**
-  - User registration and authentication
+  - User registration and authentication (JWT-based)
   - Profile management with avatar support
   - Email verification
   - Password reset functionality
@@ -36,14 +42,48 @@ A robust and feature-rich RESTful API for managing a blogging platform, built wi
 - Django REST Framework
 - PostgreSQL
 - Redis (for caching and async tasks)
-- Nginx (for production deployment)
-- Docker and Docker Compose
+- Swagger/OpenAPI (for API documentation)
+- JWT Authentication
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register/` - User registration
+- `POST /api/auth/login/` - User login
+- `POST /api/auth/refresh/` - Refresh JWT token
+- `POST /api/auth/password-reset/` - Request password reset
+
+### Users
+- `GET /api/users/` - List users
+- `GET /api/users/{id}/` - Get user details
+- `PUT /api/users/{id}/` - Update user profile
+- `GET /api/users/me/` - Get current user profile
+
+### Posts
+- `GET /api/posts/` - List all posts
+- `POST /api/posts/` - Create new post
+- `GET /api/posts/{id}/` - Get post details
+- `PUT /api/posts/{id}/` - Update post
+- `DELETE /api/posts/{id}/` - Delete post
+- `POST /api/posts/{id}/like/` - Like/unlike post
+
+### Comments
+- `GET /api/posts/{id}/comments/` - List post comments
+- `POST /api/posts/{id}/comments/` - Add comment
+- `PUT /api/comments/{id}/` - Update comment
+- `DELETE /api/comments/{id}/` - Delete comment
+
+### Categories & Tags
+- `GET /api/categories/` - List categories
+- `GET /api/tags/` - List tags
+- `POST /api/categories/` - Create category
+- `POST /api/tags/` - Create tag
 
 ## Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/blogging_platform_api.git
+   git clone https://github.com/yazzy01/blogging_platform_api.git
    cd blogging_platform_api
    ```
 
@@ -79,54 +119,28 @@ A robust and feature-rich RESTful API for managing a blogging platform, built wi
    python manage.py runserver
    ```
 
-## Deployment
-
-The project includes Docker configuration for easy deployment:
-
-1. Build and start the containers:
-   ```bash
-   docker-compose -f deployment.yml up --build
-   ```
-
-2. The application will be available at:
-   - API: http://localhost/api/
-   - Admin interface: http://localhost/admin/
-
 ## API Documentation
 
-Detailed API documentation is available at `/api/docs/` when the server is running.
-
-Key endpoints:
-
-- `/api/users/` - User management
-- `/api/posts/` - Blog posts
-- `/api/comments/` - Comments
-- `/api/categories/` - Categories
-- `/api/tags/` - Tags
+- Interactive API documentation is available at `/api/swagger/` when the server is running
+- OpenAPI schema available at `/api/schema/`
 
 ## Testing
 
 Run the test suite:
-
 ```bash
 python manage.py test
 ```
 
-For coverage report:
-
-```bash
-coverage run manage.py test
-coverage report
-```
-
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+This project is part of a BE Capstone Project and is currently under active development.
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Author
+
+Yassir Ziguiyi
+- GitHub: [@yazzy01](https://github.com/yazzy01)
+- Email: rziguiyassir2017@gmail.com
