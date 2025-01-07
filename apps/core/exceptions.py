@@ -14,5 +14,5 @@ class PermissionDeniedError(APIException):
     default_code = 'permission_denied'
 
 
-# Explicitly expose these classes at the package level
+# Explicitly expose these classes
 __all__ = ['ResourceNotFoundError', 'PermissionDeniedError']
