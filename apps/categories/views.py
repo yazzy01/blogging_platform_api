@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from core.exceptions import ResourceNotFoundError
+from apps.core.exceptions import ResourceNotFoundError
 from .models import Category
 from .serializers import CategorySerializer, CategoryDetailSerializer
 import logging
