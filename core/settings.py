@@ -144,11 +144,15 @@ from .logging import LOGGING
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
 # JWT Settings
@@ -225,9 +229,17 @@ SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "https://blogging-platform-api-748v.onrender.com",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://blogging-platform-api.onrender.com",
+]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.onrender\.com$",
+]
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [
+    "https://blogging-platform-api.onrender.com",
 ]
 
 # Swagger settings
@@ -240,16 +252,7 @@ SWAGGER_SETTINGS = {
             'in': 'header'
         }
     },
-    'VALIDATOR_URL': None,
-    'DEFAULT_INFO': None,
-    'SUPPORTED_SUBMIT_METHODS': ['get', 'post', 'put', 'delete', 'patch'],
-    'OPERATIONS_SORTER': 'alpha',
-    'JSON_EDITOR': True,
-    'DISPLAY_OPERATION_ID': False,
-    'DOC_EXPANSION': 'none',
-    'DEFAULT_MODEL_RENDERING': 'example',
-    'PERSIST_AUTH': True,
-    'REFETCH_SCHEMA_WITH_AUTH': True,
+    'DEFAULT_API_URL': 'https://blogging-platform-api.onrender.com'
 }
 
 DRF_YASG_EXCLUDE_VIEWS = (
