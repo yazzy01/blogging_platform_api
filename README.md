@@ -141,6 +141,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Author
 
-Yassir Ziguiyi
+Yassir Rzigui
 - GitHub: [@yazzy01](https://github.com/yazzy01)
-- Email: rziguiyassir2017@gmail.com
+- Email: rziguiyassir@gmail.com
