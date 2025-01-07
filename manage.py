@@ -10,7 +10,7 @@ def main():
     BASE_DIR = Path(__file__).resolve().parent
     sys.path.append(str(BASE_DIR))
     
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

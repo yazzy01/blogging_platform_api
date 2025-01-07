@@ -8,7 +8,7 @@ services:
       python -m pip install --upgrade pip
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
-    startCommand: gunicorn --workers=4 --threads=4 --timeout=120 core.wsgi:application
+    startCommand: gunicorn --workers=4 --threads=4 --timeout=120 config.wsgi:application
     healthCheckPath: /api/health/
     healthCheckTimeout: 100
     autoDeploy: false
@@ -20,7 +20,7 @@ services:
           name: blogging-platform-db
           property: connectionString
       - key: DJANGO_SETTINGS_MODULE
-        value: core.settings
+        value: config.settings
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG

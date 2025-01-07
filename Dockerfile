@@ -4,6 +4,8 @@ FROM python:3.9-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV DJANGO_SETTINGS_MODULE=config.settings
+ENV PYTHONPATH=/app
 
 # Set work directory
 WORKDIR /app
@@ -25,8 +27,11 @@ RUN pip install --upgrade pip \
 # Copy project
 COPY . /app/
 
+# Create necessary directories
+RUN mkdir -p /app/static /app/media /app/data
+
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
 # Run gunicorn
-CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "--workers=4", "--threads=4", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
