@@ -8,6 +8,11 @@ ls -la
 echo "Apps directory contents:"
 ls -la apps/
 
+# Create symlink for backward compatibility
+cd apps
+ln -sf core core
+cd ..
+
 # Set the Python path
 export PYTHONPATH="/app:/app/apps:$PYTHONPATH"
 echo "Python path after: $PYTHONPATH"
