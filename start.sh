@@ -2,24 +2,8 @@
 
 # Print debugging information
 echo "Current directory: $(pwd)"
-echo "Python path before: $PYTHONPATH"
 echo "Directory contents:"
 ls -la
-echo "Apps directory contents:"
-ls -la apps/
-
-# Create symlink for backward compatibility
-cd apps
-ln -sf core core
-cd ..
-
-# Set the Python path
-export PYTHONPATH="/app:/app/apps:$PYTHONPATH"
-echo "Python path after: $PYTHONPATH"
-
-# Print Python path information
-python -c "import sys; print('Python path:', sys.path)"
-python -c "import os; print('PYTHONPATH:', os.environ.get('PYTHONPATH'))"
 
 # Run migrations and collect static files
 python manage.py migrate --noinput

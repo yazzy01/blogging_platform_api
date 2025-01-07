@@ -14,13 +14,15 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Print paths for debugging
+print(f"BASE_DIR: {BASE_DIR}")
+
 # Add the apps directory to the Python path
 APPS_DIR = BASE_DIR / 'apps'
 sys.path.insert(0, str(APPS_DIR))
 sys.path.insert(0, str(BASE_DIR))
 
 # Print paths for debugging
-print(f"BASE_DIR: {BASE_DIR}")
 print(f"APPS_DIR: {APPS_DIR}")
 print(f"sys.path: {sys.path}")
 
@@ -58,11 +60,11 @@ INSTALLED_APPS = [
     'social_django',
     
     # Local apps
-    'core.apps.CoreConfig',
-    'users',
-    'categories',
-    'posts',
-    'comments',
+    'apps.core.apps.CoreConfig',
+    'apps.users.apps.UsersConfig',
+    'apps.categories.apps.CategoriesConfig',
+    'apps.posts.apps.PostsConfig',
+    'apps.comments.apps.CommentsConfig',
 ]
 
 MIDDLEWARE = [
@@ -76,7 +78,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
-    'users.middleware.UserActivityMiddleware',
+    'apps.users.middleware.UserActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
