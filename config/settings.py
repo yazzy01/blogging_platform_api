@@ -1,17 +1,28 @@
 """
-Django settings for blogging_platform project.
+Django settings for blogging_platform_api project.
 """
 from pathlib import Path
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
 import dj_database_url
+import sys
 
 # Load environment variables
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Add the apps directory to the Python path
+APPS_DIR = BASE_DIR / 'apps'
+sys.path.insert(0, str(APPS_DIR))
+sys.path.insert(0, str(BASE_DIR))
+
+# Print paths for debugging
+print(f"BASE_DIR: {BASE_DIR}")
+print(f"APPS_DIR: {APPS_DIR}")
+print(f"sys.path: {sys.path}")
 
 # Render deployment settings
 
@@ -47,11 +58,11 @@ INSTALLED_APPS = [
     'social_django',
     
     # Local apps
-    'apps.core',
-    'apps.users.apps.UsersConfig',
-    'apps.posts.apps.PostsConfig',
-    'apps.categories.apps.CategoriesConfig',
-    'apps.comments.apps.CommentsConfig',
+    'core.apps.CoreConfig',
+    'users.apps.UsersConfig',
+    'categories.apps.CategoriesConfig',
+    'posts.apps.PostsConfig',
+    'comments.apps.CommentsConfig',
 ]
 
 MIDDLEWARE = [
@@ -65,7 +76,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
-    'apps.users.middleware.UserActivityMiddleware',
+    'users.middleware.UserActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -95,7 +106,7 @@ print("DATABASE_URL:", os.getenv('DATABASE_URL'))
 
 # Database configuration
 database_url = os.getenv('DATABASE_URL')
-if database_url:
+if database_url and 'postgres' in database_url:
     DATABASES = {
         'default': dj_database_url.config(
             default=database_url,
@@ -270,7 +281,16 @@ SWAGGER_SETTINGS = {
             'in': 'header'
         }
     },
-    'DEFAULT_API_URL': 'https://blogging-platform-api-74bv.onrender.com'
+    'VALIDATOR_URL': None,
+    'DEFAULT_INFO': None,
+    'SUPPORTED_SUBMIT_METHODS': ['get', 'post', 'put', 'delete', 'patch'],
+    'OPERATIONS_SORTER': None,
+    'TAGS_SORTER': None,
+    'DOC_EXPANSION': 'none',
+    'DEEP_LINKING': True,
+    'SHOW_EXTENSIONS': True,
+    'DEFAULT_MODEL_RENDERING': 'model',
+    'DEFAULT_MODEL_DEPTH': 3,
 }
 
 DRF_YASG_EXCLUDE_VIEWS = (
